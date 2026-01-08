@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mushroom Kingdom Playlist</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);  /* Fun Mushroom gradient */
+            min-height: 100vh;
+        }
+        #album-art { 
+            width: 250px; height: 250px; 
+            border-radius: 50%; 
+            margin: 20px auto; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            object-fit: cover;
+            border: 5px solid rgba(255,255,255,0.5);
+        }
+        #player { width: 80%; max-width: 600px; margin: 20px auto; }
+        #playlist { list-style: none; padding: 0; max-width: 600px; margin: 20px auto; }
+        #playlist li { padding: 10px; background: rgba(255,255,255,0.9); margin: 5px; border-radius: 5px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; backdrop-filter: blur(10px); transition: all 0.3s; }
+        #playlist li.active { background: #4CAF50; color: white; transform: scale(1.02); }
+        #playlist li:hover { background: rgba(255,255,255,1); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        #status { color: #666; font-size: 0.9em; margin: 10px; }
+        .error { color: #f44336; }
+    </style>
+</head>
+<body>
+    <!-- Cover image/GIF (use your raw permalink) -->
+    <img id="album-art" 
+         src="https://raw.githubusercontent.com/amsowellman/mushroom-kingdom-playlist/main/cover.jpg" 
+         alt="Mushroom Kingdom Cover" 
+         onerror="this.src='https://via.placeholder.com/250x250/FF6B6B/FFFFFF?text=Mushroom+Kingdom'; this.onerror=null;">
+    <h1>Mushroom Kingdom Song Playlist</h1>
+    <audio id="player" controls></audio>
+    <div id="status">Loading playlist...</div>
+    <ul id="playlist"></ul>
+
+    <script>
+        // Your songs (unchanged, full loop works)
+        const songData = [
+            { name: 'Mushroom Kingdom ABC\'s.mp3', url: 'https://arweave.net/S3UFBDCizyzQ7UuynwvkTND2VIm2NrduPePwA0FWp2s' },
+            { name: 'Mushroom Kingdom 123\'s.mp3', url: 'https://arweave.net/oH8F7XdQ-N9dfgdxAjxgscKCDMpKbxTMNp4n9jhTdRY' },
+            { name: 'pop Mushroom Kingdom 123\'s.mp3', url: 'https://arweave.net/hz6bqK2Ve5x8vQIATm8p46Nd_rg3cbdcvlte2XPjQDQ' },
+            { name: 'Yo, Yo, Yo, Yo, Yoshi.mp3', url: 'https://arweave.net/Si5NNJur4MI707dYRsGYZtj0EpXQHFdwjBK3o8vzug4' }
+        ];
+
+        const player = document.getElementById('player');
+        const playlist = document.getElementById('playlist');
+        const status = document.getElementById('status');
+        let currentIndex = 0;
+
+        // Playlist UI
+        songData.forEach((song, index) => {
+            const displayName = song.name.replace('.mp3', '');
+            const li = document.createElement('li');
+            li.title = song.name;
+            li.textContent = displayName;
+            li.addEventListener('click', () => loadAndPlay(index));
+            playlist.appendChild(li);
+        });
+
+        function updateStatus(msg, isError = false) {
+            status.textContent = msg;
+            status.className = isError ? 'error' : '';
+        }
+
+        function loadAndPlay(index) {
+            currentIndex = index;
+            const song = songData[currentIndex];
+            updateStatus(`Loading "${song.name}"...`);
+
+            // Reset handlers
+            player.onloadedmetadata = null;
+            player.oncanplay = null;
+            player.onerror = null;
+            player.src = song.url;
+
+            player.onloadedmetadata = () => {
+                const duration = Math.round(player.duration);
+                updateStatus(`✅ "${song.name}" loaded (${duration}s) - Click ▶️!`);
+            };
+            player.oncanplay = () => updateStatus(`Ready: "${song.name}"`);
+            player.onerror = () => updateStatus(`❌ Failed to load "${song.name}".`, true);
+
+            updatePlaylist();
+        }
+
+        function nextSong() {
+            currentIndex = (currentIndex + 1) % songData.length;
+            loadAndPlay(currentIndex);
+            player.play().catch(() => {});
+        }
+
+        function updatePlaylist() {
+            Array.from(playlist.children).forEach((li, index) => {
+                li.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        player.addEventListener('ended', nextSong);
+        if (songData.length > 0) loadAndPlay(0);
+    </script>
+</body>
+</html>
